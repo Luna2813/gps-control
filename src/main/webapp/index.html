@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control GPS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>CONTROLO DE CLIENTES GEONAVEGA GPS</h1>
+
+    <div class="busqueda">
+
+        <input type="text"
+               id="buscarDpi"
+               placeholder="Ingrese DPI">
+
+        <button type="button"
+                onclick="buscarClientePorDpi()">
+            Buscar Cliente
+        </button>
+
+        <button type="button"
+                onclick="limpiarTodo()">
+            Limpiar
+        </button>
+
+    </div>
+
+    <hr>
+
+    <h2>Datos del Cliente</h2>
+
+    <form id="formCliente">
+
+        <input type="hidden" id="clienteId">
+
+        <input type="text"
+               id="nombre"
+               placeholder="Nombre Completo">
+
+        <input type="text"
+               id="dpi"
+               placeholder="DPI">
+
+        <input type="text"
+               id="nit"
+               placeholder="NIT">
+
+        <input type="email"
+               id="email"
+               placeholder="Email">
+
+        <input type="text"
+               id="telefono"
+               placeholder="Número de Teléfono">
+
+        <input type="text"
+               id="telefonia"
+               placeholder="Telefonía">
+
+        <input type="text"
+               id="numeroSim"
+               placeholder="Número SIM">
+
+        <button type="submit">
+    	Guardar Cliente
+	</button>
+
+	<button type="button"
+        class="btnEliminarCliente"
+        onclick="eliminarCliente()">
+    	Eliminar Cliente
+</button>
+
+    </form>
+
+    <hr>
+
+    <h2>Vehículos del Cliente</h2>
+
+    <div id="contenedorVehiculos"></div>
+
+    <div class="botones-vehiculos">
+
+        <button type="button"
+                onclick="agregarVehiculoFormulario()">
+            Agregar Otro Vehículo
+        </button>
+
+        <button type="button"
+                onclick="guardarVariosVehiculos()">
+            Guardar Vehículos
+        </button>
+
+    </div>
+
+    <hr>
+
+    <h2>Vehículos Registrados</h2>
+
+    <table id="tablaVehiculos">
+    
+
+        <thead>
+
+            <tr>
+                <th>ID</th>
+                <th>Vehículo</th>
+                <th>Placa</th>
+                <th>Cantidad</th>
+                <th>Tipo GPS</th>
+                <th>IMEI</th>
+                <th>Fecha Instalación</th>
+                <th>Estado Promoción</th>
+                <th>Descripción Promoción</th>
+                <th>Fin Promoción</th>
+                <th>Monto Normal</th>
+                <th>Monto Promoción</th>
+                <th>Acciones</th>
+            </tr>
+
+        </thead>
+        <h3 id="totalMontoCliente">Total mensual: Q 0.00</h3>
+
+        <tbody id="tablaDatos"></tbody>
+
+    </table>
+
+</div>
+
+<script src="script.js?v=90"></script>
+
+</body>
+</html>
