@@ -14,11 +14,20 @@ public class Conexion {
 	 
     // ── Parámetros de conexión ────────────────────────────────────
     // Formato: jdbc:postgresql://HOST:PUERTO/NOMBRE_BASE_DE_DATOS
-    private static final String URL  =
-        "jdbc:postgresql://localhost:5432/postgres";
- 
-    private static final String USER     = "postgres";
-    private static final String PASSWORD = "jordy"; // 
+	private static final String URL =
+	        System.getenv().getOrDefault(
+	                "DB_URL",
+	                "jdbc:postgresql://localhost:5432/gps");
+
+	private static final String USER =
+	        System.getenv().getOrDefault(
+	                "DB_USER",
+	                "postgres");
+
+	private static final String PASSWORD =
+	        System.getenv().getOrDefault(
+	                "DB_PASSWORD",
+	                "jordy");
  
    public static Connection obtener() throws SQLException {
     	System.out.println(">>>>CONECTANDO A BD postgres...");
