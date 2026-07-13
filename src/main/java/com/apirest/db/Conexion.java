@@ -17,7 +17,7 @@ public class Conexion {
 	private static final String URL =
 	        System.getenv().getOrDefault(
 	                "DB_URL",
-	                "jdbc:postgresql://localhost:5432/gps");
+	                "jdbc:postgresql://localhost:5432/postgres");
 
 	private static final String USER =
 	        System.getenv().getOrDefault(
