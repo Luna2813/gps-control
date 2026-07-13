@@ -9,14 +9,12 @@ RUN mvn clean package -DskipTests
 
 RUN echo "ARCHIVOS GENERADOS:" && ls -lah /app/target
 
-FROM eclipse-temurin:21-jre
+FROM tomcat:10.1-jdk21-temurin
 
-WORKDIR /app
+RUN rm -rf /usr/local/tomcat/webapps/*
 
-COPY --from=build /app/target/*.jar /app/app.jar
-
-RUN echo "CONTENIDO FINAL:" && ls -lah /app
+COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/ROOT.war
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+CMD ["catalina.sh", "run"]
