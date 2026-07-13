@@ -1,24 +1,19 @@
-cat > Dockerfile <<'EOF'
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
 COPY pom.xml .
-COPY src ./src
+RUN mvn dependency:go-offline
 
-RUN java -version
-RUN mvn -version
+COPY src ./src
 RUN mvn clean package -DskipTests
 
-FROM tomcat:10.1-jdk21-temurin
+FROM eclipse-temurin:21-jre
 
-RUN rm -rf /usr/local/tomcat/webapps/*
+WORKDIR /app
 
-COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/ROOT.war
+COPY --from=build /app/target/*.jar app.jar
 
-RUN sed -i 's/port="8080"/port="10000"/' /usr/local/tomcat/conf/server.xml
+EXPOSE 8080
 
-EXPOSE 10000
-
-CMD ["catalina.sh", "run"]
-EOF
+CMD ["java", "-jar", "app.jar"]
