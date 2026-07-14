@@ -1,5 +1,13 @@
+/* =====================================
+   ESTILO GENERAL
+===================================== */
+
+*{
+    box-sizing:border-box;
+}
+
 body{
-    font-family: Arial, sans-serif;
+    font-family:Arial, sans-serif;
     background:#f3f6fb;
     margin:0;
     padding:25px;
@@ -7,9 +15,9 @@ body{
 }
 
 .container{
-    max-width:1450px;
+    max-width:1500px;
     margin:auto;
-    background:white;
+    background:#ffffff;
     padding:30px;
     border-radius:16px;
     box-shadow:0 8px 25px rgba(0,0,0,.08);
@@ -18,11 +26,12 @@ body{
 h1{
     text-align:center;
     color:#0f172a;
+    margin:0 0 30px;
 }
 
 h2{
     color:#1e293b;
-    margin-top:25px;
+    margin:25px 0 18px;
 }
 
 hr{
@@ -31,96 +40,143 @@ hr{
     margin:30px 0;
 }
 
-.busqueda,
-.botones-vehiculos,
-.botones-listado{
-    display:flex;
-    gap:12px;
-    flex-wrap:wrap;
-}
-
-form{
-    display:grid;
-    grid-template-columns:repeat(5, 1fr);
-    gap:14px;
-}
+/* =====================================
+   CAMPOS Y BOTONES GENERALES
+===================================== */
 
 input{
-    padding:13px;
+    width:100%;
+    padding:12px;
     border:1px solid #cbd5e1;
     border-radius:8px;
     font-size:15px;
-    box-sizing:border-box;
+    background:#ffffff;
+    color:#1f2937;
 }
 
 input:focus{
     outline:none;
     border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+label{
+    font-weight:bold;
+    font-size:14px;
+    color:#334155;
 }
 
 button{
-    padding:12px 20px;
+    padding:12px 18px;
     border:none;
     border-radius:8px;
     background:#2563eb;
     color:white;
     font-weight:bold;
     cursor:pointer;
+    transition:.2s;
 }
 
 button:hover{
     opacity:.9;
+    transform:translateY(-1px);
 }
 
-/* VEHÍCULO */
+/* =====================================
+   BÚSQUEDA
+===================================== */
+
+.busqueda{
+    display:grid;
+    grid-template-columns:minmax(280px,1fr) auto auto;
+    gap:12px;
+    align-items:end;
+}
+
+/* =====================================
+   FORMULARIO DEL CLIENTE
+===================================== */
+
+#formCliente{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(220px,1fr));
+    gap:16px;
+    align-items:end;
+}
+
+.campo{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+.accionesCliente{
+    grid-column:1 / -1;
+    display:flex;
+    justify-content:flex-start;
+    gap:12px;
+    margin-top:4px;
+}
+
+.btnEliminarCliente{
+    background:#dc2626;
+}
+
+.btnEliminarCliente:hover{
+    background:#b91c1c;
+}
+
+/* =====================================
+   TARJETA DE VEHÍCULO
+===================================== */
 
 .vehiculo-card{
+    background:#ffffff;
     border:1px solid #dbe3ef;
-    border-radius:14px;
-    padding:25px;
-    margin-bottom:25px;
-    background:white;
-    box-shadow:0 4px 14px rgba(0,0,0,.04);
+    border-radius:16px;
+    padding:24px;
+    margin-bottom:24px;
+    box-shadow:0 5px 18px rgba(15,23,42,.06);
 }
 
 .tituloVehiculo{
-    font-size:32px;
     color:#0f172a;
-    margin:0 0 25px 0;
+    font-size:26px;
+    margin:0 0 22px;
 }
+
+/* Tres secciones horizontales */
 
 .gridVehiculo{
     display:grid;
-    grid-template-columns:1fr 1fr 1fr;
+    grid-template-columns:1fr 1.25fr 1fr;
     gap:20px;
+    align-items:stretch;
 }
 
 .panel{
-    border-radius:12px;
-    padding:20px;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:9px;
+    padding:20px;
+    border-radius:14px;
+    min-width:0;
 }
 
 .panel h4{
-    font-size:22px;
-    margin:0 0 15px 0;
+    font-size:20px;
+    margin:0 0 10px;
     padding-bottom:10px;
 }
 
-.panel label{
-    font-weight:bold;
-    color:#0f172a;
-    margin-top:8px;
+.panel input{
+    margin-bottom:5px;
 }
 
-.panel input{
-    width:100%;
-}
+/* Datos del vehículo */
 
 .panel-vehiculo{
-    background:#f8fbff;
+    background:#f4f8ff;
     border:1px solid #bfdbfe;
 }
 
@@ -129,69 +185,122 @@ button:hover{
     border-bottom:3px solid #2563eb;
 }
 
+/* Datos GPS */
+
 .panel-gps{
-    background:#f7fff9;
+    background:#f3fcf6;
     border:1px solid #bbf7d0;
 }
 
 .panel-gps h4{
-    color:#16a34a;
+    color:#15803d;
     border-bottom:3px solid #16a34a;
 }
 
+/* Promoción */
+
 .panel-promo{
-    background:#fffaf4;
+    background:#fff8f1;
     border:1px solid #fed7aa;
 }
 
 .panel-promo h4{
-    color:#f97316;
+    color:#ea580c;
     border-bottom:3px solid #f97316;
 }
 
+/* =====================================
+   ACCIONES DEL VEHÍCULO
+===================================== */
+
 .accionesVehiculo{
-    border-top:1px solid #d8dee9;
-    margin-top:25px;
-    padding-top:20px;
     display:flex;
     justify-content:center;
-    gap:18px;
+    gap:14px;
+    border-top:1px solid #e2e8f0;
+    margin-top:22px;
+    padding-top:20px;
 }
 
 .btnEliminar{
     background:#dc2626;
-    min-width:260px;
+    min-width:230px;
+}
+
+.btnEliminar:hover{
+    background:#b91c1c;
 }
 
 .btnGuardar{
     background:#16a34a !important;
-    min-width:260px;
+    min-width:230px;
+}
+
+.btnGuardar:hover{
+    background:#15803d !important;
+}
+
+/* =====================================
+   BOTONES DE VEHÍCULOS Y LISTADOS
+===================================== */
+
+.botones-vehiculos,
+.botones-listado{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
 }
 
 .botones-vehiculos button:first-child{
     background:#16a34a;
 }
 
-/* TABLAS */
+.botones-vehiculos button:first-child:hover{
+    background:#15803d;
+}
+
+.botones-listado button:last-child{
+    background:#64748b;
+}
+
+.botones-listado button:last-child:hover{
+    background:#475569;
+}
+
+/* =====================================
+   TABLAS
+===================================== */
+
+.tabla-contenedor{
+    width:100%;
+    overflow-x:auto;
+    border-radius:12px;
+}
 
 table{
     width:100%;
+    min-width:1250px;
     border-collapse:collapse;
     margin-top:15px;
-    border-radius:10px;
-    overflow:hidden;
+    background:#ffffff;
 }
 
 thead{
     background:#0f172a;
-    color:white;
+    color:#ffffff;
 }
 
-th, td{
+th,
+td{
     padding:12px;
     border:1px solid #e5e7eb;
     text-align:center;
     font-size:14px;
+    vertical-align:middle;
+}
+
+th{
+    white-space:nowrap;
 }
 
 tbody tr:nth-child(even){
@@ -202,30 +311,112 @@ tbody tr:hover{
     background:#eff6ff;
 }
 
+td button{
+    margin:3px;
+    padding:9px 12px;
+}
+
 td button:first-child{
     background:#16a34a;
+}
+
+td button:first-child:hover{
+    background:#15803d;
 }
 
 td button:last-child{
     background:#dc2626;
 }
 
-@media(max-width:900px){
-    form,
+td button:last-child:hover{
+    background:#b91c1c;
+}
+
+/* =====================================
+   TOTAL DEL CLIENTE
+===================================== */
+
+.totalCliente{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:16px;
+}
+
+#totalMontoCliente{
+    display:inline-block;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+    padding:12px 18px;
+    border-radius:10px;
+    font-size:18px;
+}
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media(max-width:1100px){
+
+    #formCliente{
+        grid-template-columns:repeat(2, minmax(220px,1fr));
+    }
+
+    .gridVehiculo{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .panel-promo{
+        grid-column:1 / -1;
+    }
+}
+
+@media(max-width:760px){
+
+    body{
+        padding:12px;
+    }
+
+    .container{
+        padding:18px;
+        border-radius:12px;
+    }
+
+    h1{
+        font-size:25px;
+    }
+
+    .busqueda,
+    #formCliente,
     .gridVehiculo{
         grid-template-columns:1fr;
     }
 
-    table{
-        display:block;
-        overflow-x:auto;
-        white-space:nowrap;
+    .panel-promo{
+        grid-column:auto;
     }
-  .btnEliminarCliente{
-    background:#dc2626;
-}
 
-.btnEliminarCliente:hover{
-    background:#b91c1c;
-}
+    .accionesCliente,
+    .accionesVehiculo,
+    .botones-vehiculos,
+    .botones-listado{
+        flex-direction:column;
+    }
+
+    .accionesCliente button,
+    .accionesVehiculo button,
+    .botones-vehiculos button,
+    .botones-listado button{
+        width:100%;
+        min-width:0;
+    }
+
+    .totalCliente{
+        justify-content:stretch;
+    }
+
+    #totalMontoCliente{
+        width:100%;
+        text-align:center;
+    }
 }

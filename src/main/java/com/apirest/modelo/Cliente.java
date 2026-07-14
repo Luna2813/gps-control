@@ -8,8 +8,7 @@ public class Cliente {
     private String nit;
     private String email;
     private String telefono;
-    private String telefonia;
-    private String numeroSim;
+    private int cantidadDispositivos;
 
     public Cliente() {
     }
@@ -21,7 +20,6 @@ public class Cliente {
     public void setId(int id) {
         this.id = id;
     }
-
 
     public String getNombre() {
         return nombre;
@@ -55,8 +53,6 @@ public class Cliente {
         this.email = email;
     }
 
-
-
     public String getTelefono() {
         return telefono;
     }
@@ -65,19 +61,11 @@ public class Cliente {
         this.telefono = telefono;
     }
 
-    public String getTelefonia() {
-        return telefonia;
+    public int getCantidadDispositivos() {
+        return cantidadDispositivos;
     }
 
-    public void setTelefonia(String telefonia) {
-        this.telefonia = telefonia;
-    }
-
-    public String getNumeroSim() {
-        return numeroSim;
-    }
-
-    public void setNumeroSim(String numeroSim) {
-        this.numeroSim = numeroSim;
+    public void setCantidadDispositivos(int cantidadDispositivos) {
+        this.cantidadDispositivos = cantidadDispositivos;
     }
 }

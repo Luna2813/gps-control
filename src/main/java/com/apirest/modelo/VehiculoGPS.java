@@ -5,19 +5,21 @@ public class VehiculoGPS {
     private int id;
     private int clienteId;
 
-    private int cantidadDispositivos;
     private String vehiculo;
     private String placa;
     private String fechaInstalacion;
 
     private String tipoGps;
     private String imei;
+    private String telefonia;
+    private String numeroSim;
+    private String numeroTelefono;
 
     private String promocion;
     private String fechaFinPromocion;
     private String descripcionPromocion;
 
-    private double montoNormal;
+    private double montoOriginal;
     private double montoPromocion;
 
     public VehiculoGPS() {
@@ -31,7 +33,6 @@ public class VehiculoGPS {
         this.id = id;
     }
 
-
     public int getClienteId() {
         return clienteId;
     }
@@ -39,16 +40,6 @@ public class VehiculoGPS {
     public void setClienteId(int clienteId) {
         this.clienteId = clienteId;
     }
-
-
-    public int getCantidadDispositivos() {
-        return cantidadDispositivos;
-    }
-
-    public void setCantidadDispositivos(int cantidadDispositivos) {
-        this.cantidadDispositivos = cantidadDispositivos;
-    }
-
 
     public String getVehiculo() {
         return vehiculo;
@@ -74,7 +65,6 @@ public class VehiculoGPS {
         this.fechaInstalacion = fechaInstalacion;
     }
 
-
     public String getTipoGps() {
         return tipoGps;
     }
@@ -91,6 +81,29 @@ public class VehiculoGPS {
         this.imei = imei;
     }
 
+    public String getTelefonia() {
+        return telefonia;
+    }
+
+    public void setTelefonia(String telefonia) {
+        this.telefonia = telefonia;
+    }
+
+    public String getNumeroSim() {
+        return numeroSim;
+    }
+
+    public void setNumeroSim(String numeroSim) {
+        this.numeroSim = numeroSim;
+    }
+
+    public String getNumeroTelefono() {
+        return numeroTelefono;
+    }
+
+    public void setNumeroTelefono(String numeroTelefono) {
+        this.numeroTelefono = numeroTelefono;
+    }
 
     public String getPromocion() {
         return promocion;
@@ -116,13 +129,12 @@ public class VehiculoGPS {
         this.descripcionPromocion = descripcionPromocion;
     }
 
-
-    public double getMontoNormal() {
-        return montoNormal;
+    public double getMontoOriginal() {
+        return montoOriginal;
     }
 
-    public void setMontoNormal(double montoNormal) {
-        this.montoNormal = montoNormal;
+    public void setMontoOriginal(double montoOriginal) {
+        this.montoOriginal = montoOriginal;
     }
 
     public double getMontoPromocion() {

@@ -4,29 +4,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Control GPS</title>
-    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet" href="style.css?v=130">
 </head>
 
 <body>
 
 <div class="container">
 
-    <h1>CONTROL DE CLIENTES GEONAVEGA GPS</h1>
+    <h1>Control de Clientes y Vehículos GPS</h1>
+
+    <!-- =========================
+         BÚSQUEDA POR DPI
+    ========================== -->
 
     <div class="busqueda">
 
-        <input type="text"
-               id="buscarDpi"
-               placeholder="Ingrese DPI">
+        <input
+            type="text"
+            id="buscarDpi"
+            placeholder="Ingrese el DPI del cliente"
+        >
 
-        <button type="button"
-                onclick="buscarClientePorDpi()">
+        <button
+            type="button"
+            onclick="buscarClientePorDpi()"
+        >
             Buscar Cliente
         </button>
 
-        <button type="button"
-                onclick="limpiarTodo()">
+        <button
+            type="button"
+            onclick="limpiarTodo()"
+        >
             Limpiar
         </button>
 
@@ -34,53 +46,100 @@
 
     <hr>
 
+    <!-- =========================
+         DATOS DEL CLIENTE
+    ========================== -->
+
     <h2>Datos del Cliente</h2>
 
     <form id="formCliente">
 
         <input type="hidden" id="clienteId">
 
-        <input type="text"
-               id="nombre"
-               placeholder="Nombre Completo">
+        <div class="campo">
+            <label for="nombre">Nombre completo</label>
+            <input
+                type="text"
+                id="nombre"
+                placeholder="Nombre completo"
+                required
+            >
+        </div>
 
-        <input type="text"
-               id="dpi"
-               placeholder="DPI">
+        <div class="campo">
+            <label for="dpi">DPI</label>
+            <input
+                type="text"
+                id="dpi"
+                placeholder="DPI"
+                required
+            >
+        </div>
 
-        <input type="text"
-               id="nit"
-               placeholder="NIT">
+        <div class="campo">
+            <label for="nit">NIT</label>
+            <input
+                type="text"
+                id="nit"
+                placeholder="NIT"
+            >
+        </div>
 
-        <input type="email"
-               id="email"
-               placeholder="Email">
+        <div class="campo">
+            <label for="email">Correo electrónico</label>
+            <input
+                type="email"
+                id="email"
+                placeholder="Correo electrónico"
+            >
+        </div>
 
-        <input type="text"
-               id="telefono"
-               placeholder="Número de Teléfono">
+        <div class="campo">
+            <label for="telefono">Teléfono del cliente</label>
+            <input
+                type="text"
+                id="telefono"
+                placeholder="Teléfono del cliente"
+            >
+        </div>
 
-        <input type="text"
-               id="telefonia"
-               placeholder="Telefonía">
+        <div class="campo">
+            <label for="cantidadDispositivos">
+                Cantidad de dispositivos
+            </label>
 
-        <input type="text"
-               id="numeroSim"
-               placeholder="Número SIM">
+            <input
+                type="number"
+                id="cantidadDispositivos"
+                placeholder="Cantidad de dispositivos"
+                min="0"
+                value="0"
+            >
+        </div>
 
-        <button type="submit">
-    	Guardar Cliente
-	</button>
+        <div class="accionesCliente">
 
-	<button type="button"
-        class="btnEliminarCliente"
-        onclick="eliminarCliente()">
-    	Eliminar Cliente
-</button>
+            <button type="submit">
+                Guardar Cliente
+            </button>
+
+            <button
+                type="button"
+                class="btnEliminarCliente"
+                onclick="eliminarCliente()"
+            >
+                Eliminar Cliente
+            </button>
+
+        </div>
 
     </form>
 
     <hr>
+
+    <!-- =========================
+         VEHÍCULOS DEL CLIENTE
+    ========================== -->
 
     <h2>Vehículos del Cliente</h2>
 
@@ -88,13 +147,17 @@
 
     <div class="botones-vehiculos">
 
-        <button type="button"
-                onclick="agregarVehiculoFormulario()">
+        <button
+            type="button"
+            onclick="agregarVehiculoFormulario()"
+        >
             Agregar Otro Vehículo
         </button>
 
-        <button type="button"
-                onclick="guardarVariosVehiculos()">
+        <button
+            type="button"
+            onclick="guardarVariosVehiculos()"
+        >
             Guardar Vehículos
         </button>
 
@@ -102,39 +165,104 @@
 
     <hr>
 
+    <!-- =========================
+         VEHÍCULOS REGISTRADOS
+    ========================== -->
+
     <h2>Vehículos Registrados</h2>
 
-    <table id="tablaVehiculos">
-    
+    <div class="tabla-contenedor">
 
-        <thead>
+        <table id="tablaVehiculos">
 
-            <tr>
-                <th>ID</th>
-                <th>Vehículo</th>
-                <th>Placa</th>
-                <th>Cantidad</th>
-                <th>Tipo GPS</th>
-                <th>IMEI</th>
-                <th>Fecha Instalación</th>
-                <th>Estado Promoción</th>
-                <th>Descripción Promoción</th>
-                <th>Fin Promoción</th>
-                <th>Monto Normal</th>
-                <th>Monto Promoción</th>
-                <th>Acciones</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Vehículo</th>
+                    <th>Placa</th>
+                    <th>Fecha instalación</th>
 
-        </thead>
-        <h3 id="totalMontoCliente">Total mensual: Q 0.00</h3>
+                    <th>Tipo GPS</th>
+                    <th>IMEI</th>
+                    <th>Telefonía</th>
+                    <th>Número SIM</th>
+                    <th>Teléfono GPS</th>
 
-        <tbody id="tablaDatos"></tbody>
+                    <th>Monto original</th>
 
-    </table>
+                    <th>Estado promoción</th>
+                    <th>Descripción</th>
+                    <th>Monto promoción</th>
+                    <th>Fin promoción</th>
+
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody id="tablaDatos"></tbody>
+
+        </table>
+
+    </div>
+
+    <div class="totalCliente">
+        <strong id="totalMontoCliente">
+            Total mensual: Q 0.00
+        </strong>
+    </div>
+
+    <hr>
+
+    <!-- =========================
+         LISTADO GENERAL
+    ========================== -->
+
+    <h2>Listado General de Clientes</h2>
+
+    <div class="botones-listado">
+
+        <button
+            type="button"
+            onclick="mostrarTodosClientes()"
+        >
+            Mostrar Todos
+        </button>
+
+        <button
+            type="button"
+            onclick="ocultarClientes()"
+        >
+            Ocultar
+        </button>
+
+    </div>
+
+    <div class="tabla-contenedor">
+
+        <table
+            id="tablaClientes"
+            style="display:none;"
+        >
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>DPI</th>
+                    <th>Teléfono</th>
+                    <th>Cantidad de dispositivos</th>
+                </tr>
+            </thead>
+
+            <tbody id="tablaClientesBody"></tbody>
+
+        </table>
+
+    </div>
 
 </div>
 
-<script src="script.js?v=90"></script>
+<script src="script.js?v=130"></script>
 
 </body>
 </html>

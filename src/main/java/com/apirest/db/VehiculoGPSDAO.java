@@ -8,6 +8,9 @@ import java.util.List;
 
 public class VehiculoGPSDAO {
 
+    // ===============================
+    // CALCULAR PROMOCIÓN
+    // ===============================
     private String calcularPromocion(String fechaFinPromocion) {
         if (fechaFinPromocion == null || fechaFinPromocion.isBlank()) {
             return "Inactiva";
@@ -18,17 +21,19 @@ public class VehiculoGPSDAO {
 
         if (hoy.isAfter(fechaFin) || hoy.isEqual(fechaFin)) {
             return "Inactiva";
-        } else {
-            return "Activa";
         }
+
+        return "Activa";
     }
 
+    // ===============================
+    // MAPEAR RESULTSET
+    // ===============================
     private VehiculoGPS mapear(ResultSet rs) throws SQLException {
         VehiculoGPS v = new VehiculoGPS();
 
         v.setId(rs.getInt("id"));
         v.setClienteId(rs.getInt("cliente_id"));
-        v.setCantidadDispositivos(rs.getInt("cantidad_dispositivos"));
 
         v.setVehiculo(rs.getString("vehiculo"));
         v.setPlaca(rs.getString("placa"));
@@ -36,21 +41,35 @@ public class VehiculoGPSDAO {
 
         v.setTipoGps(rs.getString("tipo_gps"));
         v.setImei(rs.getString("imei"));
+        v.setTelefonia(rs.getString("telefonia"));
+        v.setNumeroSim(rs.getString("numero_sim"));
+        v.setNumeroTelefono(rs.getString("numero_telefono"));
 
-        v.setPromocion(calcularPromocion(rs.getString("fecha_fin_promocion")));
-        v.setFechaFinPromocion(rs.getString("fecha_fin_promocion"));
+        String fechaFin = rs.getString("fecha_fin_promocion");
+
+        v.setFechaFinPromocion(fechaFin);
+        v.setPromocion(calcularPromocion(fechaFin));
         v.setDescripcionPromocion(rs.getString("descripcion_promocion"));
 
-        v.setMontoNormal(rs.getDouble("monto_normal"));
+        v.setMontoOriginal(rs.getDouble("monto_normal"));
         v.setMontoPromocion(rs.getDouble("monto_promocion"));
 
         return v;
     }
 
+    // ===============================
+    // OBTENER POR CLIENTE
+    // ===============================
     public List<VehiculoGPS> obtenerPorCliente(int clienteId) {
         List<VehiculoGPS> lista = new ArrayList<>();
 
-        String sql = "SELECT * FROM vehiculos_gps WHERE cliente_id=? ORDER BY id";
+        String sql = "SELECT id, cliente_id, vehiculo, placa, fecha_instalacion, "
+                   + "tipo_gps, imei, telefonia, numero_sim, numero_telefono, "
+                   + "promocion, fecha_fin_promocion, descripcion_promocion, "
+                   + "monto_normal, monto_promocion "
+                   + "FROM vehiculos_gps "
+                   + "WHERE cliente_id=? "
+                   + "ORDER BY id";
 
         try (Connection con = Conexion.obtener();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -64,14 +83,23 @@ public class VehiculoGPSDAO {
             }
 
         } catch (SQLException e) {
+            System.err.println("Error al obtener vehículos: " + e.getMessage());
             e.printStackTrace();
         }
 
         return lista;
     }
 
+    // ===============================
+    // OBTENER POR ID
+    // ===============================
     public VehiculoGPS obtenerPorId(int id) {
-        String sql = "SELECT * FROM vehiculos_gps WHERE id=?";
+        String sql = "SELECT id, cliente_id, vehiculo, placa, fecha_instalacion, "
+                   + "tipo_gps, imei, telefonia, numero_sim, numero_telefono, "
+                   + "promocion, fecha_fin_promocion, descripcion_promocion, "
+                   + "monto_normal, monto_promocion "
+                   + "FROM vehiculos_gps "
+                   + "WHERE id=?";
 
         try (Connection con = Conexion.obtener();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -85,46 +113,71 @@ public class VehiculoGPSDAO {
             }
 
         } catch (SQLException e) {
+            System.err.println("Error al buscar vehículo: " + e.getMessage());
             e.printStackTrace();
         }
 
         return null;
     }
 
+    // ===============================
+    // CREAR
+    // ===============================
     public VehiculoGPS crear(int clienteId, VehiculoGPS v) {
         String sql = "INSERT INTO vehiculos_gps "
-                + "(cliente_id, cantidad_dispositivos, vehiculo, placa, fecha_instalacion, "
-                + "tipo_gps, imei, promocion, fecha_fin_promocion, descripcion_promocion, "
-                + "monto_normal, monto_promocion) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                   + "(cliente_id, vehiculo, placa, fecha_instalacion, "
+                   + "tipo_gps, imei, telefonia, numero_sim, numero_telefono, "
+                   + "promocion, fecha_fin_promocion, descripcion_promocion, "
+                   + "monto_normal, monto_promocion) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection con = Conexion.obtener();
-             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = con.prepareStatement(
+                     sql,
+                     Statement.RETURN_GENERATED_KEYS
+             )) {
 
-            v.setPromocion(calcularPromocion(v.getFechaFinPromocion()));
             v.setClienteId(clienteId);
+            v.setPromocion(calcularPromocion(v.getFechaFinPromocion()));
 
             ps.setInt(1, clienteId);
-            ps.setInt(2, v.getCantidadDispositivos());
-            ps.setString(3, v.getVehiculo());
-            ps.setString(4, v.getPlaca());
-            ps.setDate(5, Date.valueOf(v.getFechaInstalacion()));
+            ps.setString(2, v.getVehiculo());
+            ps.setString(3, v.getPlaca());
 
-            ps.setString(6, v.getTipoGps());
-            ps.setString(7, v.getImei());
-            ps.setString(8, v.getPromocion());
-
-            if (v.getFechaFinPromocion() == null || v.getFechaFinPromocion().isBlank()) {
-                ps.setNull(9, Types.DATE);
+            if (v.getFechaInstalacion() == null
+                    || v.getFechaInstalacion().isBlank()) {
+                ps.setNull(4, Types.DATE);
             } else {
-                ps.setDate(9, Date.valueOf(v.getFechaFinPromocion()));
+                ps.setDate(4, Date.valueOf(v.getFechaInstalacion()));
             }
 
-            ps.setString(10, v.getDescripcionPromocion());
-            ps.setDouble(11, v.getMontoNormal());
-            ps.setDouble(12, v.getMontoPromocion());
+            ps.setString(5, v.getTipoGps());
+            ps.setString(6, v.getImei());
+            ps.setString(7, v.getTelefonia());
+            ps.setString(8, v.getNumeroSim());
+            ps.setString(9, v.getNumeroTelefono());
 
-            ps.executeUpdate();
+            ps.setString(10, v.getPromocion());
+
+            if (v.getFechaFinPromocion() == null
+                    || v.getFechaFinPromocion().isBlank()) {
+                ps.setNull(11, Types.DATE);
+            } else {
+                ps.setDate(
+                        11,
+                        Date.valueOf(v.getFechaFinPromocion())
+                );
+            }
+
+            ps.setString(12, v.getDescripcionPromocion());
+            ps.setDouble(13, v.getMontoOriginal());
+            ps.setDouble(14, v.getMontoPromocion());
+
+            int filas = ps.executeUpdate();
+
+            if (filas == 0) {
+                return null;
+            }
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -132,53 +185,77 @@ public class VehiculoGPSDAO {
                 }
             }
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            return v;
 
-        return v;
+        } catch (SQLException e) {
+            System.err.println("Error al crear vehículo: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
+    // ===============================
+    // ACTUALIZAR
+    // ===============================
     public boolean actualizar(int id, VehiculoGPS v) {
         String sql = "UPDATE vehiculos_gps SET "
-                + "cantidad_dispositivos=?, vehiculo=?, placa=?, fecha_instalacion=?, "
-                + "tipo_gps=?, imei=?, promocion=?, fecha_fin_promocion=?, "
-                + "descripcion_promocion=?, monto_normal=?, monto_promocion=? "
-                + "WHERE id=?";
+                   + "vehiculo=?, placa=?, fecha_instalacion=?, "
+                   + "tipo_gps=?, imei=?, telefonia=?, numero_sim=?, "
+                   + "numero_telefono=?, promocion=?, fecha_fin_promocion=?, "
+                   + "descripcion_promocion=?, monto_normal=?, "
+                   + "monto_promocion=? "
+                   + "WHERE id=?";
 
         try (Connection con = Conexion.obtener();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             v.setPromocion(calcularPromocion(v.getFechaFinPromocion()));
 
-            ps.setInt(1, v.getCantidadDispositivos());
-            ps.setString(2, v.getVehiculo());
-            ps.setString(3, v.getPlaca());
-            ps.setDate(4, Date.valueOf(v.getFechaInstalacion()));
+            ps.setString(1, v.getVehiculo());
+            ps.setString(2, v.getPlaca());
 
-            ps.setString(5, v.getTipoGps());
-            ps.setString(6, v.getImei());
-            ps.setString(7, v.getPromocion());
-
-            if (v.getFechaFinPromocion() == null || v.getFechaFinPromocion().isBlank()) {
-                ps.setNull(8, Types.DATE);
+            if (v.getFechaInstalacion() == null
+                    || v.getFechaInstalacion().isBlank()) {
+                ps.setNull(3, Types.DATE);
             } else {
-                ps.setDate(8, Date.valueOf(v.getFechaFinPromocion()));
+                ps.setDate(3, Date.valueOf(v.getFechaInstalacion()));
             }
 
-            ps.setString(9, v.getDescripcionPromocion());
-            ps.setDouble(10, v.getMontoNormal());
-            ps.setDouble(11, v.getMontoPromocion());
-            ps.setInt(12, id);
+            ps.setString(4, v.getTipoGps());
+            ps.setString(5, v.getImei());
+            ps.setString(6, v.getTelefonia());
+            ps.setString(7, v.getNumeroSim());
+            ps.setString(8, v.getNumeroTelefono());
+
+            ps.setString(9, v.getPromocion());
+
+            if (v.getFechaFinPromocion() == null
+                    || v.getFechaFinPromocion().isBlank()) {
+                ps.setNull(10, Types.DATE);
+            } else {
+                ps.setDate(
+                        10,
+                        Date.valueOf(v.getFechaFinPromocion())
+                );
+            }
+
+            ps.setString(11, v.getDescripcionPromocion());
+            ps.setDouble(12, v.getMontoOriginal());
+            ps.setDouble(13, v.getMontoPromocion());
+            ps.setInt(14, id);
 
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            System.err.println("Error al actualizar vehículo: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
+    // ===============================
+    // ELIMINAR
+    // ===============================
     public boolean eliminar(int id) {
         String sql = "DELETE FROM vehiculos_gps WHERE id=?";
 
@@ -186,9 +263,11 @@ public class VehiculoGPSDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, id);
+
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            System.err.println("Error al eliminar vehículo: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
