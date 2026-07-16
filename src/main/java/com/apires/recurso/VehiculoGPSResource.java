@@ -5,6 +5,10 @@ import com.apirest.modelo.VehiculoGPS;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Context;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import com.apirest.seguridad.SesionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -112,7 +116,14 @@ public class VehiculoGPSResource {
     @Path("/{id}")
     public Response actualizar(
             @PathParam("id") int id,
-            VehiculoGPS vehiculo) {
+            VehiculoGPS vehiculo,
+            @Context HttpServletRequest request) {
+
+        if (!esAdministrador(request)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity("{\"error\":\"Solo un administrador puede editar vehículos\"}")
+                    .build();
+        }
 
         if (!vehiculoValido(vehiculo)) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -135,7 +146,14 @@ public class VehiculoGPSResource {
     // ELIMINAR VEHÍCULO
     @DELETE
     @Path("/{id}")
-    public Response eliminar(@PathParam("id") int id) {
+    public Response eliminar(@PathParam("id") int id,
+                             @Context HttpServletRequest request) {
+        if (!esAdministrador(request)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity("{\"error\":\"Solo un administrador puede eliminar vehículos\"}")
+                    .build();
+        }
+
         boolean eliminado = dao.eliminar(id);
 
         if (!eliminado) {
@@ -155,6 +173,16 @@ public class VehiculoGPSResource {
                 && vehiculo.getPlaca() != null
                 && !vehiculo.getPlaca().isBlank()
                 && vehiculo.getFechaInstalacion() != null
-                && !vehiculo.getFechaInstalacion().isBlank();
+                && !vehiculo.getFechaInstalacion().isBlank()
+                && (!"ANUAL".equalsIgnoreCase(vehiculo.getTipoPlan())
+                    || (vehiculo.getFechaFinPlanAnual() != null
+                        && !vehiculo.getFechaFinPlanAnual().isBlank()));
+    }
+
+    private boolean esAdministrador(HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        return sesion != null
+                && "ADMIN".equals(
+                        sesion.getAttribute(SesionService.USUARIO_ROL));
     }
 }

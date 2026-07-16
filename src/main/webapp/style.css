@@ -6,6 +6,10 @@
     box-sizing:border-box;
 }
 
+.oculto{
+    display:none !important;
+}
+
 body{
     font-family:Arial, sans-serif;
     background:#f3f6fb;
@@ -21,6 +25,72 @@ body{
     padding:30px;
     border-radius:16px;
     box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.login-view{
+    min-height:calc(100vh - 50px);
+    display:grid;
+    place-items:center;
+}
+
+.login-card{
+    width:min(420px, 100%);
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    background:#ffffff;
+    padding:32px;
+    border-radius:16px;
+    box-shadow:0 8px 25px rgba(0,0,0,.10);
+}
+
+.login-card h1,
+.login-card p{
+    margin:0;
+}
+
+.login-card > p{
+    text-align:center;
+    color:#64748b;
+}
+
+.login-error{
+    min-height:20px;
+    color:#b91c1c !important;
+    font-weight:bold;
+}
+
+.barra-sesion{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:14px;
+    margin-bottom:18px;
+}
+
+.barra-sesion span{
+    font-weight:bold;
+}
+
+.barra-sesion button{
+    background:#475569;
+}
+
+.form-usuario{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(180px, 1fr)) auto;
+    gap:14px;
+    align-items:end;
+}
+
+.tabla-usuarios{
+    min-width:850px;
+}
+
+.tabla-usuarios button:disabled,
+.tabla-usuarios select:disabled{
+    opacity:.55;
+    cursor:not-allowed;
 }
 
 h1{
@@ -55,6 +125,22 @@ input{
 }
 
 input:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+select{
+    width:100%;
+    padding:12px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    font-size:15px;
+    background:#ffffff;
+    color:#1f2937;
+}
+
+select:focus{
     outline:none;
     border-color:#2563eb;
     box-shadow:0 0 0 3px rgba(37,99,235,.12);
@@ -332,6 +418,88 @@ td button:last-child:hover{
     background:#b91c1c;
 }
 
+.solo-lectura{
+    color:#64748b;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.encabezado-auditoria{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-top:28px;
+}
+
+.encabezado-auditoria h2{
+    margin-bottom:0;
+}
+
+.tabla-auditoria{
+    min-width:1000px;
+}
+
+.encabezado-notificaciones{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.acciones-notificaciones{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.acciones-auditoria{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.contador{
+    display:inline-grid;
+    place-items:center;
+    min-width:30px;
+    height:30px;
+    padding:0 8px;
+    border-radius:999px;
+    background:#dc2626;
+    color:white;
+    font-size:15px;
+}
+
+.lista-notificaciones{
+    display:grid;
+    gap:12px;
+    margin:16px 0 28px;
+}
+
+.notificacion{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:18px;
+    padding:16px;
+    border:1px solid #cbd5e1;
+    border-radius:12px;
+}
+
+.notificacion.pendiente{
+    border-left:6px solid #f59e0b;
+    background:#fffbeb;
+}
+
+.notificacion.leida{
+    opacity:.7;
+    background:#f8fafc;
+}
+
+.notificacion p{ margin:6px 0; }
+.sin-notificaciones{ color:#64748b; }
+
 /* =====================================
    TOTAL DEL CLIENTE
 ===================================== */
@@ -369,6 +537,10 @@ td button:last-child:hover{
     .panel-promo{
         grid-column:1 / -1;
     }
+
+    .form-usuario{
+        grid-template-columns:repeat(2, minmax(220px,1fr));
+    }
 }
 
 @media(max-width:760px){
@@ -388,7 +560,8 @@ td button:last-child:hover{
 
     .busqueda,
     #formCliente,
-    .gridVehiculo{
+    .gridVehiculo,
+    .form-usuario{
         grid-template-columns:1fr;
     }
 
@@ -401,6 +574,27 @@ td button:last-child:hover{
     .botones-vehiculos,
     .botones-listado{
         flex-direction:column;
+    }
+
+    .encabezado-auditoria{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+    .encabezado-notificaciones,
+    .notificacion{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+    .acciones-notificaciones,
+    .acciones-auditoria{
+        flex-direction:column;
+    }
+
+    .acciones-notificaciones button,
+    .acciones-auditoria button{
+        width:100%;
     }
 
     .accionesCliente button,

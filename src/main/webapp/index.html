@@ -7,12 +7,38 @@
 
     <title>Control GPS</title>
 
-    <link rel="stylesheet" href="style.css?v=130">
+    <link rel="stylesheet" href="style.css?v=143">
 </head>
 
 <body>
 
-<div class="container">
+<div id="loginView" class="login-view">
+    <form id="formLogin" class="login-card">
+        <h1>Control GPS</h1>
+        <p>Inicia sesión para continuar</p>
+
+        <div class="campo">
+            <label for="loginUsuario">Usuario</label>
+            <input id="loginUsuario" type="text" autocomplete="username" required>
+        </div>
+
+        <div class="campo">
+            <label for="loginPassword">Contraseña</label>
+            <input id="loginPassword" type="password"
+                   autocomplete="current-password" required>
+        </div>
+
+        <p id="loginError" class="login-error" role="alert"></p>
+        <button type="submit">Iniciar sesión</button>
+    </form>
+</div>
+
+<div id="appView" class="container oculto">
+
+    <div class="barra-sesion">
+        <span id="usuarioActual"></span>
+        <button type="button" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
 
     <h1>Control de Clientes y Vehículos GPS</h1>
 
@@ -195,6 +221,10 @@
                     <th>Monto promoción</th>
                     <th>Fin promoción</th>
 
+                    <th>Tipo plan</th>
+                    <th>Fin plan anual</th>
+                    <th>Estado plan</th>
+
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -260,9 +290,90 @@
 
     </div>
 
+    <section id="adminUsuarios" class="oculto">
+        <hr>
+        <div class="encabezado-notificaciones">
+            <h2>Notificaciones <span id="contadorNotificaciones" class="contador">0</span></h2>
+            <div class="acciones-notificaciones">
+                <button type="button" onclick="activarNotificacionesPush()">
+                    Activar en este dispositivo
+                </button>
+                <button type="button" onclick="cargarNotificaciones()">Actualizar</button>
+                <button id="btnAlternarNotificaciones" type="button"
+                        aria-controls="contenedorNotificaciones" aria-expanded="true"
+                        onclick="alternarNotificaciones()">Ocultar</button>
+            </div>
+        </div>
+        <div id="contenedorNotificaciones">
+            <div id="listaNotificaciones" class="lista-notificaciones"></div>
+        </div>
+
+        <hr>
+        <h2>Administración de Usuarios</h2>
+
+        <form id="formUsuario" class="form-usuario">
+            <div class="campo">
+                <label for="nuevoNombre">Nombre</label>
+                <input id="nuevoNombre" type="text" maxlength="120" required>
+            </div>
+            <div class="campo">
+                <label for="nuevoUsuario">Usuario</label>
+                <input id="nuevoUsuario" type="text" maxlength="40"
+                       pattern="[A-Za-z0-9._-]{3,40}" required>
+            </div>
+            <div class="campo">
+                <label for="nuevoPassword">Contraseña inicial</label>
+                <input id="nuevoPassword" type="password"
+                       minlength="12" maxlength="72" required>
+            </div>
+            <div class="campo">
+                <label for="nuevoRol">Rol</label>
+                <select id="nuevoRol">
+                    <option value="OPERADOR">Operador</option>
+                    <option value="ADMIN">Administrador</option>
+                </select>
+            </div>
+            <button type="submit">Crear Usuario</button>
+        </form>
+
+        <div class="tabla-contenedor">
+            <table class="tabla-usuarios">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Nombre</th><th>Usuario</th>
+                        <th>Rol</th><th>Estado</th><th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaUsuariosBody"></tbody>
+            </table>
+        </div>
+
+        <div class="encabezado-auditoria">
+            <h2>Historial de Auditoría</h2>
+            <div class="acciones-auditoria">
+                <button type="button" onclick="cargarAuditoria()">Actualizar</button>
+                <button id="btnAlternarAuditoria" type="button"
+                        aria-controls="contenedorAuditoria" aria-expanded="true"
+                        onclick="alternarAuditoria()">Ocultar</button>
+            </div>
+        </div>
+
+        <div id="contenedorAuditoria" class="tabla-contenedor">
+            <table class="tabla-auditoria">
+                <thead>
+                    <tr>
+                        <th>Fecha</th><th>Usuario</th><th>Rol</th>
+                        <th>Acción realizada</th><th>Detalle técnico</th><th>Estado</th><th>IP</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaAuditoriaBody"></tbody>
+            </table>
+        </div>
+    </section>
+
 </div>
 
-<script src="script.js?v=130"></script>
+<script src="script.js?v=143"></script>
 
 </body>
 </html>

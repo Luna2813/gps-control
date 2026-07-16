@@ -8,6 +8,32 @@ import java.util.List;
 
 public class VehiculoGPSDAO {
 
+    public int finalizarPromocionesVencidas() {
+        new NotificacionDAO().generarNotificacionesDeVencimiento();
+        String sql = "UPDATE vehiculos_gps SET promocion='Inactiva' "
+                + "WHERE promocion='Activa' "
+                + "AND fecha_fin_promocion IS NOT NULL "
+                + "AND fecha_fin_promocion <= CURRENT_DATE";
+
+        try (Connection con = Conexion.obtener();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            int actualizadas = ps.executeUpdate();
+            if (actualizadas > 0) {
+                new AuditoriaDAO().registrarSistema(
+                        "PATCH",
+                        "vehiculos/promociones/vencidas/" + actualizadas
+                );
+                System.out.println("Promociones finalizadas automáticamente: "
+                        + actualizadas);
+            }
+            return actualizadas;
+        } catch (SQLException e) {
+            System.err.println("No fue posible finalizar promociones: "
+                    + e.getMessage());
+            return 0;
+        }
+    }
+
     // ===============================
     // CALCULAR PROMOCIÓN
     // ===============================
@@ -53,6 +79,9 @@ public class VehiculoGPSDAO {
 
         v.setMontoOriginal(rs.getDouble("monto_normal"));
         v.setMontoPromocion(rs.getDouble("monto_promocion"));
+        v.setTipoPlan(rs.getString("tipo_plan"));
+        v.setFechaFinPlanAnual(rs.getString("fecha_fin_plan_anual"));
+        v.setEstadoPlanAnual(rs.getString("estado_plan_anual"));
 
         return v;
     }
@@ -61,12 +90,14 @@ public class VehiculoGPSDAO {
     // OBTENER POR CLIENTE
     // ===============================
     public List<VehiculoGPS> obtenerPorCliente(int clienteId) {
+        finalizarPromocionesVencidas();
         List<VehiculoGPS> lista = new ArrayList<>();
 
         String sql = "SELECT id, cliente_id, vehiculo, placa, fecha_instalacion, "
                    + "tipo_gps, imei, telefonia, numero_sim, numero_telefono, "
                    + "promocion, fecha_fin_promocion, descripcion_promocion, "
-                   + "monto_normal, monto_promocion "
+                   + "monto_normal, monto_promocion, tipo_plan, "
+                   + "fecha_fin_plan_anual, estado_plan_anual "
                    + "FROM vehiculos_gps "
                    + "WHERE cliente_id=? "
                    + "ORDER BY id";
@@ -94,10 +125,12 @@ public class VehiculoGPSDAO {
     // OBTENER POR ID
     // ===============================
     public VehiculoGPS obtenerPorId(int id) {
+        finalizarPromocionesVencidas();
         String sql = "SELECT id, cliente_id, vehiculo, placa, fecha_instalacion, "
                    + "tipo_gps, imei, telefonia, numero_sim, numero_telefono, "
                    + "promocion, fecha_fin_promocion, descripcion_promocion, "
-                   + "monto_normal, monto_promocion "
+                   + "monto_normal, monto_promocion, tipo_plan, "
+                   + "fecha_fin_plan_anual, estado_plan_anual "
                    + "FROM vehiculos_gps "
                    + "WHERE id=?";
 
@@ -128,8 +161,9 @@ public class VehiculoGPSDAO {
                    + "(cliente_id, vehiculo, placa, fecha_instalacion, "
                    + "tipo_gps, imei, telefonia, numero_sim, numero_telefono, "
                    + "promocion, fecha_fin_promocion, descripcion_promocion, "
-                   + "monto_normal, monto_promocion) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                   + "monto_normal, monto_promocion, tipo_plan, "
+                   + "fecha_fin_plan_anual, estado_plan_anual) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection con = Conexion.obtener();
              PreparedStatement ps = con.prepareStatement(
@@ -172,6 +206,10 @@ public class VehiculoGPSDAO {
             ps.setString(12, v.getDescripcionPromocion());
             ps.setDouble(13, v.getMontoOriginal());
             ps.setDouble(14, v.getMontoPromocion());
+            normalizarPlan(v);
+            ps.setString(15, v.getTipoPlan());
+            asignarFecha(ps, 16, v.getFechaFinPlanAnual());
+            ps.setString(17, v.getEstadoPlanAnual());
 
             int filas = ps.executeUpdate();
 
@@ -203,7 +241,8 @@ public class VehiculoGPSDAO {
                    + "tipo_gps=?, imei=?, telefonia=?, numero_sim=?, "
                    + "numero_telefono=?, promocion=?, fecha_fin_promocion=?, "
                    + "descripcion_promocion=?, monto_normal=?, "
-                   + "monto_promocion=? "
+                   + "monto_promocion=?, tipo_plan=?, "
+                   + "fecha_fin_plan_anual=?, estado_plan_anual=? "
                    + "WHERE id=?";
 
         try (Connection con = Conexion.obtener();
@@ -242,7 +281,11 @@ public class VehiculoGPSDAO {
             ps.setString(11, v.getDescripcionPromocion());
             ps.setDouble(12, v.getMontoOriginal());
             ps.setDouble(13, v.getMontoPromocion());
-            ps.setInt(14, id);
+            normalizarPlan(v);
+            ps.setString(14, v.getTipoPlan());
+            asignarFecha(ps, 15, v.getFechaFinPlanAnual());
+            ps.setString(16, v.getEstadoPlanAnual());
+            ps.setInt(17, id);
 
             return ps.executeUpdate() > 0;
 
@@ -270,6 +313,32 @@ public class VehiculoGPSDAO {
             System.err.println("Error al eliminar vehículo: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+
+    private void normalizarPlan(VehiculoGPS v) {
+        if (!"ANUAL".equalsIgnoreCase(v.getTipoPlan())) {
+            v.setTipoPlan("MENSUAL");
+            v.setFechaFinPlanAnual(null);
+            v.setEstadoPlanAnual("NO_APLICA");
+            return;
+        }
+        v.setTipoPlan("ANUAL");
+        String fecha = v.getFechaFinPlanAnual();
+        if (fecha == null || fecha.isBlank()) {
+            v.setEstadoPlanAnual("ACTIVO");
+            return;
+        }
+        v.setEstadoPlanAnual(LocalDate.now().isAfter(LocalDate.parse(fecha))
+                ? "VENCIDO" : "ACTIVO");
+    }
+
+    private void asignarFecha(PreparedStatement ps, int indice, String fecha)
+            throws SQLException {
+        if (fecha == null || fecha.isBlank()) {
+            ps.setNull(indice, Types.DATE);
+        } else {
+            ps.setDate(indice, Date.valueOf(fecha));
         }
     }
 }

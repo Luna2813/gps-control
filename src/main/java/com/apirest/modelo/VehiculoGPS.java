@@ -21,6 +21,9 @@ public class VehiculoGPS {
 
     private double montoOriginal;
     private double montoPromocion;
+    private String tipoPlan;
+    private String fechaFinPlanAnual;
+    private String estadoPlanAnual;
 
     public VehiculoGPS() {
     }
@@ -144,4 +147,11 @@ public class VehiculoGPS {
     public void setMontoPromocion(double montoPromocion) {
         this.montoPromocion = montoPromocion;
     }
+
+    public String getTipoPlan() { return tipoPlan; }
+    public void setTipoPlan(String tipoPlan) { this.tipoPlan = tipoPlan; }
+    public String getFechaFinPlanAnual() { return fechaFinPlanAnual; }
+    public void setFechaFinPlanAnual(String fechaFinPlanAnual) { this.fechaFinPlanAnual = fechaFinPlanAnual; }
+    public String getEstadoPlanAnual() { return estadoPlanAnual; }
+    public void setEstadoPlanAnual(String estadoPlanAnual) { this.estadoPlanAnual = estadoPlanAnual; }
 }

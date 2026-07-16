@@ -1,13 +1,458 @@
 const API_CLIENTES = "api/clientes";
 const API_VEHICULOS = "api/vehiculos";
+const API_AUTH = "api/auth";
+const API_USUARIOS = "api/usuarios";
+const API_AUDITORIA = "api/auditoria";
+const API_NOTIFICACIONES = "api/notificaciones";
+const API_PUSH = "api/push";
+
+let csrfToken = "";
+let usuarioActualId = null;
+let usuarioActualRol = "";
 
 document.addEventListener("DOMContentLoaded", () => {
     document
         .getElementById("formCliente")
         .addEventListener("submit", guardarCliente);
 
-    agregarVehiculoFormulario();
+    document
+        .getElementById("formLogin")
+        .addEventListener("submit", iniciarSesion);
+
+    document
+        .getElementById("formUsuario")
+        .addEventListener("submit", crearUsuario);
+
+    comprobarSesion();
 });
+
+// =====================================
+// AUTENTICACIÓN
+// =====================================
+
+async function comprobarSesion() {
+    try {
+        const response = await fetch(`${API_AUTH}/session`, {
+            credentials: "same-origin"
+        });
+        const sesion = await leerRespuesta(response);
+        mostrarAplicacion(sesion);
+    } catch {
+        mostrarLogin();
+    }
+}
+
+async function iniciarSesion(evento) {
+    evento.preventDefault();
+
+    const error = document.getElementById("loginError");
+    error.textContent = "";
+
+    const credenciales = {
+        usuario: document.getElementById("loginUsuario").value.trim(),
+        password: document.getElementById("loginPassword").value
+    };
+
+    try {
+        const response = await fetch(`${API_AUTH}/login`, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(credenciales)
+        });
+
+        const sesion = await leerRespuesta(response);
+        document.getElementById("formLogin").reset();
+        mostrarAplicacion(sesion);
+    } catch (e) {
+        error.textContent = e.message;
+    }
+}
+
+async function cerrarSesion() {
+    try {
+        const response = await fetch(`${API_AUTH}/logout`, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "X-CSRF-Token": csrfToken }
+        });
+        await leerRespuesta(response);
+    } finally {
+        csrfToken = "";
+        limpiarTodo();
+        mostrarLogin();
+    }
+}
+
+function mostrarAplicacion(sesion) {
+    csrfToken = sesion.csrfToken;
+    usuarioActualId = Number(sesion.id);
+    usuarioActualRol = sesion.rol;
+    document.getElementById("usuarioActual").textContent =
+        `${sesion.nombre} (${sesion.rol})`;
+    document.getElementById("loginView").classList.add("oculto");
+    document.getElementById("appView").classList.remove("oculto");
+
+    const contenedor = document.getElementById("contenedorVehiculos");
+    if (contenedor.children.length === 0) {
+        agregarVehiculoFormulario();
+    }
+
+    const panelUsuarios = document.getElementById("adminUsuarios");
+    if (sesion.rol === "ADMIN") {
+        panelUsuarios.classList.remove("oculto");
+        cargarUsuarios();
+        cargarAuditoria();
+        cargarNotificaciones();
+    } else {
+        panelUsuarios.classList.add("oculto");
+    }
+}
+
+function mostrarLogin() {
+    document.getElementById("appView").classList.add("oculto");
+    document.getElementById("loginView").classList.remove("oculto");
+    document.getElementById("adminUsuarios").classList.add("oculto");
+    document.getElementById("loginUsuario").focus();
+}
+
+function headersJsonSeguros() {
+    return {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken
+    };
+}
+
+function escaparHtml(valor) {
+    return String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+async function cargarNotificaciones() {
+    const lista = document.getElementById("listaNotificaciones");
+    try {
+        const response = await fetch(API_NOTIFICACIONES);
+        const notificaciones = await leerRespuesta(response);
+        const pendientes = notificaciones.filter(n => !n.leida).length;
+        document.getElementById("contadorNotificaciones").textContent = pendientes;
+        lista.innerHTML = notificaciones.length === 0
+            ? '<p class="sin-notificaciones">No hay notificaciones.</p>'
+            : notificaciones.map(n => `
+                <article class="notificacion ${n.leida ? "leida" : "pendiente"}">
+                    <div>
+                        <strong>${escaparHtml(n.titulo)}</strong>
+                        <p>${escaparHtml(n.mensaje)}</p>
+                        <small>Fecha del evento: ${escaparHtml(n.fechaEvento)}</small>
+                    </div>
+                    ${n.leida ? '<span>Leída</span>' : `
+                        <button type="button" onclick="marcarNotificacionLeida(${n.id})">
+                            Marcar como leída
+                        </button>`}
+                </article>`).join("");
+    } catch (e) {
+        lista.innerHTML = `<p class="login-error">${escaparHtml(e.message)}</p>`;
+    }
+}
+
+async function marcarNotificacionLeida(id) {
+    try {
+        const response = await fetch(`${API_NOTIFICACIONES}/${id}/leida`, {
+            method: "PUT",
+            headers: headersJsonSeguros()
+        });
+        await leerRespuesta(response);
+        cargarNotificaciones();
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+function alternarNotificaciones() {
+    alternarPanel("contenedorNotificaciones", "btnAlternarNotificaciones");
+}
+
+function alternarAuditoria() {
+    alternarPanel("contenedorAuditoria", "btnAlternarAuditoria");
+}
+
+function alternarPanel(idPanel, idBoton) {
+    const panel = document.getElementById(idPanel);
+    const boton = document.getElementById(idBoton);
+    const estaOculto = panel.classList.toggle("oculto");
+    boton.textContent = estaOculto ? "Mostrar" : "Ocultar";
+    boton.setAttribute("aria-expanded", String(!estaOculto));
+}
+
+async function activarNotificacionesPush() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        alert("Este navegador no admite notificaciones push.");
+        return;
+    }
+
+    try {
+        const permiso = await Notification.requestPermission();
+        if (permiso !== "granted") {
+            throw new Error("El permiso de notificaciones no fue autorizado");
+        }
+
+        const registro = await navigator.serviceWorker.register("service-worker.js");
+        const respuestaClave = await fetch(`${API_PUSH}/clave-publica`);
+        const datosClave = await leerRespuesta(respuestaClave);
+        const claveServidor = base64UrlAUint8Array(datosClave.clavePublica);
+        let suscripcion = await registro.pushManager.getSubscription();
+        let endpointAnterior = null;
+
+        // El botón también sirve para renovar un endpoint que el proveedor
+        // haya vencido (HTTP 404/410). Por eso una activación solicitada por
+        // el usuario reemplaza siempre la suscripción anterior del navegador.
+        if (suscripcion) {
+            endpointAnterior = suscripcion.endpoint;
+            const cancelada = await suscripcion.unsubscribe();
+            if (!cancelada) {
+                throw new Error("No se pudo renovar la suscripción anterior");
+            }
+            suscripcion = null;
+        }
+
+        if (!suscripcion) {
+            suscripcion = await registro.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: claveServidor
+            });
+        }
+
+        const json = suscripcion.toJSON();
+        const response = await fetch(`${API_PUSH}/suscripciones`, {
+            method: "POST",
+            headers: headersJsonSeguros(),
+            body: JSON.stringify({
+                endpoint: json.endpoint,
+                p256dh: json.keys.p256dh,
+                auth: json.keys.auth,
+                endpointAnterior
+            })
+        });
+        const resultado = await leerRespuesta(response);
+        alert(resultado.mensaje);
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+function base64UrlAUint8Array(valor) {
+    const limpia = String(valor || "")
+        .trim()
+        .replace(/^VAPID_PUBLIC_KEY=/, "")
+        .replace(/\s/g, "");
+    if (!/^[A-Za-z0-9_-]+$/.test(limpia)) {
+        throw new Error("La clave pública VAPID tiene un formato inválido");
+    }
+    if (limpia.length !== 87) {
+        throw new Error(
+            `La clave pública VAPID está incompleta (tiene ${limpia.length} caracteres y debe tener 87)`
+        );
+    }
+    const relleno = "=".repeat((4 - limpia.length % 4) % 4);
+    const base64 = (limpia + relleno).replaceAll("-", "+").replaceAll("_", "/");
+    const bytes = atob(base64);
+    return Uint8Array.from(bytes, caracter => caracter.charCodeAt(0));
+}
+
+// =====================================
+// ADMINISTRACIÓN DE USUARIOS
+// =====================================
+
+async function cargarUsuarios() {
+    try {
+        const response = await fetch(API_USUARIOS);
+        const usuarios = await leerRespuesta(response);
+        const cuerpo = document.getElementById("tablaUsuariosBody");
+        cuerpo.innerHTML = "";
+
+        usuarios.forEach(usuario => {
+            const esActual = Number(usuario.id) === usuarioActualId;
+            const siguienteEstado = !usuario.activo;
+            cuerpo.innerHTML += `
+                <tr>
+                    <td>${numeroSeguro(usuario.id)}</td>
+                    <td>${escaparHtml(usuario.nombre)}</td>
+                    <td>${escaparHtml(usuario.usuario)}</td>
+                    <td>
+                        <select onchange="cambiarRolUsuario(${usuario.id}, this.value)"
+                                ${esActual ? "disabled" : ""}>
+                            <option value="OPERADOR" ${usuario.rol === "OPERADOR" ? "selected" : ""}>Operador</option>
+                            <option value="ADMIN" ${usuario.rol === "ADMIN" ? "selected" : ""}>Administrador</option>
+                        </select>
+                    </td>
+                    <td>${usuario.activo ? "Activo" : "Inactivo"}</td>
+                    <td>
+                        <button type="button"
+                            onclick="cambiarEstadoUsuario(${usuario.id}, ${siguienteEstado})"
+                            ${esActual ? "disabled" : ""}>
+                            ${usuario.activo ? "Desactivar" : "Activar"}
+                        </button>
+                        <button type="button" onclick="restablecerPassword(${usuario.id})">
+                            Cambiar contraseña
+                        </button>
+                    </td>
+                </tr>`;
+        });
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+async function cargarAuditoria() {
+    const cuerpo = document.getElementById("tablaAuditoriaBody");
+
+    try {
+        const response = await fetch(`${API_AUDITORIA}?limite=100`);
+        const registros = await leerRespuesta(response);
+
+        if (registros.length === 0) {
+            cuerpo.innerHTML = '<tr><td colspan="7">Todavía no hay operaciones registradas.</td></tr>';
+            return;
+        }
+
+        cuerpo.innerHTML = registros.map(registro => {
+            const fecha = registro.creadoEn
+                ? new Date(registro.creadoEn).toLocaleString("es-GT")
+                : "";
+
+            return `
+                <tr>
+                    <td>${escaparHtml(fecha)}</td>
+                    <td>${escaparHtml(registro.usuario)}</td>
+                    <td>${escaparHtml(registro.rol)}</td>
+                    <td>${escaparHtml(describirAccionAuditoria(registro))}</td>
+                    <td>${escaparHtml(`${registro.metodo} /${registro.ruta}`)}</td>
+                    <td>${numeroSeguro(registro.estadoHttp)}</td>
+                    <td>${escaparHtml(registro.direccionIp)}</td>
+                </tr>`;
+        }).join("");
+    } catch (e) {
+        cuerpo.innerHTML = `<tr><td colspan="7">${escaparHtml(e.message)}</td></tr>`;
+    }
+}
+
+function describirAccionAuditoria(registro) {
+    const metodo = String(registro.metodo || "").toUpperCase();
+    const partes = String(registro.ruta || "")
+        .split("/")
+        .filter(Boolean);
+    const recurso = partes[0] || "registro";
+    const id = /^\d+$/.test(partes[1] || "") ? partes[1] : "";
+
+    const nombres = {
+        clientes: "cliente",
+        vehiculos: "vehículo",
+        instalaciones: "instalación",
+        usuarios: "usuario"
+    };
+    const nombre = nombres[recurso] || recurso;
+    const referencia = id ? ` #${id}` : "";
+
+    if (recurso === "vehiculos" && partes[1] === "promociones"
+            && partes[2] === "vencidas") {
+        const cantidad = /^\d+$/.test(partes[3] || "") ? partes[3] : "";
+        return `El sistema finalizó ${cantidad || "una o más"} promoción(es) vencida(s)`;
+    }
+
+    if (recurso === "usuarios" && partes[2] === "estado") {
+        return `Cambió el estado del usuario${referencia}`;
+    }
+    if (recurso === "usuarios" && partes[2] === "rol") {
+        return `Cambió el rol del usuario${referencia}`;
+    }
+    if (recurso === "usuarios" && partes[2] === "password") {
+        return `Cambió la contraseña del usuario${referencia}`;
+    }
+
+    const acciones = {
+        POST: "Creó",
+        PUT: "Actualizó",
+        PATCH: "Actualizó",
+        DELETE: "Eliminó"
+    };
+    return `${acciones[metodo] || metodo} ${nombre}${referencia}`.trim();
+}
+
+async function crearUsuario(evento) {
+    evento.preventDefault();
+    const datos = {
+        nombre: document.getElementById("nuevoNombre").value.trim(),
+        usuario: document.getElementById("nuevoUsuario").value.trim(),
+        password: document.getElementById("nuevoPassword").value,
+        rol: document.getElementById("nuevoRol").value
+    };
+
+    try {
+        const response = await fetch(API_USUARIOS, {
+            method: "POST",
+            headers: headersJsonSeguros(),
+            body: JSON.stringify(datos)
+        });
+        await leerRespuesta(response);
+        document.getElementById("formUsuario").reset();
+        alert("Usuario creado correctamente");
+        cargarUsuarios();
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+async function cambiarEstadoUsuario(id, activo) {
+    const accion = activo ? "activar" : "desactivar";
+    if (!confirm(`¿Desea ${accion} este usuario?`)) return;
+
+    try {
+        const response = await fetch(`${API_USUARIOS}/${id}/estado`, {
+            method: "PUT",
+            headers: headersJsonSeguros(),
+            body: JSON.stringify({ activo })
+        });
+        await leerRespuesta(response);
+        cargarUsuarios();
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+async function cambiarRolUsuario(id, rol) {
+    try {
+        const response = await fetch(`${API_USUARIOS}/${id}/rol`, {
+            method: "PUT",
+            headers: headersJsonSeguros(),
+            body: JSON.stringify({ rol })
+        });
+        await leerRespuesta(response);
+        cargarUsuarios();
+    } catch (e) {
+        alert(e.message);
+        cargarUsuarios();
+    }
+}
+
+async function restablecerPassword(id) {
+    const password = prompt("Ingrese la nueva contraseña (entre 12 y 72 caracteres)");
+    if (password === null) return;
+
+    try {
+        const response = await fetch(`${API_USUARIOS}/${id}/password`, {
+            method: "PUT",
+            headers: headersJsonSeguros(),
+            body: JSON.stringify({ password })
+        });
+        await leerRespuesta(response);
+        alert("Contraseña actualizada correctamente");
+    } catch (e) {
+        alert(e.message);
+    }
+}
 
 // =====================================
 // UTILIDADES
@@ -148,9 +593,7 @@ function guardarCliente(e) {
 
     fetch(url, {
         method: metodo,
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: headersJsonSeguros(),
         body: JSON.stringify(cliente)
     })
         .then(leerRespuesta)
@@ -279,6 +722,15 @@ function agregarVehiculoFormulario() {
                     type="date"
                     class="fechaFinPromocion"
                 >
+
+                <label>Tipo de plan</label>
+                <select class="tipoPlan">
+                    <option value="MENSUAL">Mensual</option>
+                    <option value="ANUAL">Anual</option>
+                </select>
+
+                <label>Fecha de finalización del plan anual</label>
+                <input type="date" class="fechaFinPlanAnual">
             </div>
 
         </div>
@@ -353,7 +805,12 @@ function obtenerVehiculoDesdeTarjeta(card) {
             Number.isNaN(montoPromocion) ? 0 : montoPromocion,
 
         fechaFinPromocion:
-            card.querySelector(".fechaFinPromocion").value
+            card.querySelector(".fechaFinPromocion").value,
+
+        tipoPlan: card.querySelector(".tipoPlan").value,
+
+        fechaFinPlanAnual:
+            card.querySelector(".fechaFinPlanAnual").value
     };
 }
 
@@ -376,6 +833,10 @@ function validarVehiculo(vehiculo) {
 
     if (vehiculo.montoPromocion < 0) {
         return "El monto de promoción no puede ser negativo";
+    }
+
+    if (vehiculo.tipoPlan === "ANUAL" && vehiculo.fechaFinPlanAnual === "") {
+        return "Seleccione la fecha de finalización del plan anual";
     }
 
     return null;
@@ -426,9 +887,7 @@ function guardarVariosVehiculos() {
         `${API_VEHICULOS}/cliente/${clienteId}/varios`,
         {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: headersJsonSeguros(),
             body: JSON.stringify(vehiculos)
         }
     )
@@ -466,7 +925,7 @@ function obtenerVehiculos(clienteId) {
             if (!Array.isArray(data) || data.length === 0) {
                 tabla.innerHTML = `
                     <tr>
-                        <td colspan="15">
+                        <td colspan="18">
                             Este cliente no tiene vehículos registrados
                         </td>
                     </tr>
@@ -510,6 +969,23 @@ function obtenerVehiculos(clienteId) {
 // =====================================
 
 function crearFilaVehiculo(v) {
+    const accionesAdministrador = usuarioActualRol === "ADMIN"
+        ? `
+                <button
+                    type="button"
+                    onclick="editarVehiculo(${v.id})"
+                >
+                    Editar
+                </button>
+
+                <button
+                    type="button"
+                    onclick="eliminarVehiculo(${v.id})"
+                >
+                    Eliminar
+                </button>`
+        : `<span class="solo-lectura">Solo lectura</span>`;
+
     return `
         <tr>
             <td>${valorSeguro(v.id)}</td>
@@ -530,20 +1006,12 @@ function crearFilaVehiculo(v) {
             <td>Q ${numeroSeguro(v.montoPromocion).toFixed(2)}</td>
             <td>${valorSeguro(v.fechaFinPromocion)}</td>
 
-            <td>
-                <button
-                    type="button"
-                    onclick="editarVehiculo(${v.id})"
-                >
-                    Editar
-                </button>
+            <td>${valorSeguro(v.tipoPlan)}</td>
+            <td>${valorSeguro(v.fechaFinPlanAnual)}</td>
+            <td>${valorSeguro(v.estadoPlanAnual)}</td>
 
-                <button
-                    type="button"
-                    onclick="eliminarVehiculo(${v.id})"
-                >
-                    Eliminar
-                </button>
+            <td>
+                ${accionesAdministrador}
             </td>
         </tr>
     `;
@@ -615,6 +1083,12 @@ function editarVehiculo(id) {
             ).value =
                 valorSeguro(v.fechaFinPromocion);
 
+            card.querySelector(".tipoPlan").value =
+                valorSeguro(v.tipoPlan) || "MENSUAL";
+
+            card.querySelector(".fechaFinPlanAnual").value =
+                valorSeguro(v.fechaFinPlanAnual);
+
             const botonGuardar =
                 document.createElement("button");
 
@@ -673,9 +1147,7 @@ function guardarVehiculoEditado(boton) {
 
     fetch(`${API_VEHICULOS}/${id}`, {
         method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: headersJsonSeguros(),
         body: JSON.stringify(vehiculo)
     })
         .then(leerRespuesta)
@@ -711,7 +1183,8 @@ function eliminarVehiculo(id) {
     }
 
     fetch(`${API_VEHICULOS}/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: { "X-CSRF-Token": csrfToken }
     })
         .then(leerRespuesta)
         .then(() => {
@@ -745,7 +1218,8 @@ function eliminarCliente() {
     }
 
     fetch(`${API_CLIENTES}/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: { "X-CSRF-Token": csrfToken }
     })
         .then(leerRespuesta)
         .then(() => {
